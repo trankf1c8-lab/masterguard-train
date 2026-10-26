@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MasterGuard 护齿大师 · 训练心率监测</title>
+<meta name="description" content="MasterGuard 训练心率监测：连接护齿设备，实时读取可信心率，训练结束后分析心率区间与强度。" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#121317" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<style>
+/* ==========================================================================
+   MasterGuard · 训练监测  —— 设计令牌照搬官网 css/base.css
+   ========================================================================== */
+:root{
+  --mg-bg:#DDDBD3; --mg-bg-2:#D2D0C7; --mg-panel:#FFFFFF;
+  --mg-ink:#121317; --mg-ink-2:#4E525A; --mg-ink-3:#8B8F97; --mg-ink-4:#B6BAC1;
+  --mg-line:rgba(18,19,23,.10); --mg-line-2:rgba(18,19,23,.06);
+  --mg-gold:#B08D4F; --mg-gold-2:#D6B87A; --mg-gold-3:#F0E2C4;
+  --mg-dark:#0E0F12; --mg-dark-2:#191A1F;
+  --mg-tech:#2C7BE5; --mg-ok:#2E7D5B; --mg-warn:#C0693A; --mg-bad:#A63D3D;
+  --mg-sans:"Inter","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --mg-mono:"SFMono-Regular","JetBrains Mono","Cascadia Mono",Consolas,monospace;
+  --mg-display:"方正粗金陵简体","FZCuJinLing-JW","Source Han Serif SC Heavy","Songti SC",Georgia,serif;
+  --mg-radius:14px; --mg-radius-sm:9px; --mg-radius-lg:22px;
+  --mg-maxw:1280px;
+  --mg-shadow-s:0 1px 2px rgba(18,19,23,.05),0 4px 14px rgba(18,19,23,.05);
+  --mg-shadow-m:0 2px 6px rgba(18,19,23,.06),0 16px 40px rgba(18,19,23,.08);
+  --mg-ease:cubic-bezier(.22,1,.36,1);
+  /* 心率区间色（与品牌金/暖灰协调） */
+  --z0:#B6BAC1; --z1:#7FB3A3; --z2:#5FA8D3; --z3:#8E9A4E; --z4:#C0693A; --z5:#A63D3D;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--mg-bg);color:var(--mg-ink);
+  font-family:var(--mg-sans);font-size:18px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+h1,h2,h3,h4{margin:0;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+p{margin:0}
+ul{margin:0;padding:0;list-style:none}
+::selection{background:var(--mg-gold-2);color:#10110F}
+
+/* ---------- 通用块 ---------- */
+.mg-wrap{max-width:var(--mg-maxw);margin:0 auto;padding:0 40px}
+@media(max-width:720px){.mg-wrap{padding:0 18px}}
+.mg-eyebrow{font-family:var(--mg-mono);font-size:13px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--mg-gold);font-weight:600}
+.mg-page-title{font-family:var(--mg-display);font-weight:800;font-size:clamp(30px,3.4vw,46px);
+  letter-spacing:-.02em;line-height:1.15}
+.mg-page-title em{font-style:normal;color:var(--mg-gold)}
+.mg-lede{color:var(--mg-ink-2);max-width:62ch}
+
+/* ---------- 顶栏 ---------- */
+.mg-header{position:sticky;top:0;z-index:40;height:66px;display:flex;align-items:center;
+  background:rgba(221,219,211,.86);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--mg-line-2)}
+.mg-header .mg-wrap{display:flex;align-items:center;gap:28px;width:100%}
+.mg-logo{display:flex;align-items:center;gap:11px;flex:0 0 auto}
+.mg-logo-mark{width:38px;height:38px;border-radius:10px;background:var(--mg-dark);color:#fff;
+  display:grid;place-items:center;font-family:var(--mg-mono);font-weight:700;font-size:14px;
+  letter-spacing:.02em}
+.mg-logo-text{font-size:16px;letter-spacing:.14em;font-weight:600}
+.mg-logo-text em{font-style:normal;color:var(--mg-gold)}
+.mg-nav{display:flex;gap:4px;margin-left:auto}
+.mg-nav button{height:44px;padding:0 20px;border-radius:999px;font-size:24px;color:var(--mg-ink-2);
+  transition:background .3s var(--mg-ease),color .3s}
+.mg-nav button:hover{color:var(--mg-ink);background:rgba(255,255,255,.6)}
+.mg-nav button.active{background:var(--mg-ink);color:#fff}
+@media(max-width:820px){.mg-logo-text{display:none}.mg-nav button{padding:0 13px;font-size:18px}}
+
+/* ---------- 按钮 ---------- */
+.mg-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;height:46px;
+  padding:0 24px;border-radius:999px;font-size:17px;font-weight:500;letter-spacing:.01em;
+  transition:transform .28s var(--mg-ease),box-shadow .28s var(--mg-ease),background .28s,color .28s,border-color .28s;
+  border:1px solid transparent;user-select:none}
+.mg-btn:active{transform:scale(.975)}
+.mg-btn[disabled]{opacity:.42;pointer-events:none}
+.mg-btn-dark{background:var(--mg-ink);color:#fff}
+.mg-btn-dark:hover{background:#000;box-shadow:0 8px 26px rgba(18,19,23,.22);transform:translateY(-1px)}
+.mg-btn-gold{background:linear-gradient(135deg,#C9A768,#A9834A);color:#1A1408;font-weight:600;
+  box-shadow:0 4px 18px rgba(176,141,79,.28)}
+.mg-btn-gold:hover{box-shadow:0 10px 28px rgba(176,141,79,.34);transform:translateY(-1px)}
+.mg-btn-ghost{border-color:rgba(18,19,23,.20);color:var(--mg-ink)}
+.mg-btn-ghost:hover{border-color:rgba(18,19,23,.42);background:rgba(255,255,255,.5)}
+.mg-btn-lg{height:52px;padding:0 30px;font-size:18px}
+.mg-btn-sm{height:38px;padding:0 16px;font-size:15px}
+
+/* ---------- 卡片 ---------- */
+.mg-card{background:var(--mg-panel);border:1px solid var(--mg-line-2);border-radius:var(--mg-radius);
+  padding:28px 26px;transition:transform .5s var(--mg-ease),box-shadow .5s var(--mg-ease),border-color .4s}
+.mg-card.hoverable:hover{transform:translateY(-4px);box-shadow:var(--mg-shadow-m);border-color:rgba(18,19,23,.14)}
+.mg-card-dark{background:var(--mg-dark);color:#F4F2EC;border-color:rgba(255,255,255,.08)}
+
+/* ---------- 页面壳 ---------- */
+.page{display:none;padding:56px 0 80px}
+.page.active{display:block;animation:mgIn .5s var(--mg-ease) both}
+@keyframes mgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.page-head{margin-bottom:34px}
+.page-head .mg-eyebrow{display:block;margin-bottom:12px}
+
+/* ==========================================================================
+   首页
+   ========================================================================== */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center;margin-bottom:56px}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:26px}}
+.hero h1{font-family:var(--mg-display);font-weight:800;font-size:clamp(40px,5vw,68px);
+  line-height:1.08;letter-spacing:-.03em;margin:14px 0 18px}
+.hero h1 em{font-style:normal;color:var(--mg-gold)}
+.hero .tagline{font-size:19px;color:var(--mg-ink-2);margin-bottom:8px}
+.hero .lede{color:var(--mg-ink-2);max-width:52ch;margin-bottom:28px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+
+.connect-panel{background:var(--mg-panel);border:1px solid var(--mg-line-2);
+  border-radius:var(--mg-radius-lg);padding:26px;box-shadow:var(--mg-shadow-s)}
+.dev-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.dev-dot{width:10px;height:10px;border-radius:50%;background:var(--mg-ink-4);flex:0 0 auto;
+  transition:background .3s,box-shadow .3s}
+.dev-dot.on{background:var(--mg-ok);box-shadow:0 0 10px rgba(46,125,91,.5)}
+.dev-name{font-weight:600}
+.dev-sub{color:var(--mg-ink-3);font-size:13px;font-family:var(--mg-mono);letter-spacing:.06em}
+.readout{margin:20px 0 22px;padding:18px 0;border-top:1px solid var(--mg-line-2);
+  border-bottom:1px solid var(--mg-line-2);display:flex;align-items:baseline;gap:10px}
+.readout .num{font-family:var(--mg-mono);font-size:52px;font-weight:700;line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.readout .unit{color:var(--mg-ink-3);font-size:14px;letter-spacing:.08em}
+.readout .zone{margin-left:auto;font-size:14px;color:var(--mg-ink-2)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:8px}
+.stat{padding:14px 0;border-top:1px solid var(--mg-line-2)}
+.stat .k{font-family:var(--mg-mono);font-size:12px;letter-spacing:.12em;color:var(--mg-ink-3);
+  text-transform:uppercase}
+.stat .v{font-size:20px;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+
+/* ==========================================================================
+   训练中
+   ========================================================================== */
+.train-stage{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start}
+@media(max-width:960px){.train-stage{grid-template-columns:1fr}}
+.dial{position:relative;background:var(--mg-panel);border:1px solid var(--mg-line-2);
+  border-radius:var(--mg-radius-lg);padding:40px;display:grid;place-items:center;
+  min-height:440px;box-shadow:var(--mg-shadow-s);overflow:hidden}
+.dial svg{position:absolute;inset:0;width:100%;height:100%}
+.dial-core{position:relative;z-index:2;text-align:center}
+.dial-bpm{font-family:var(--mg-mono);font-size:clamp(84px,13vw,150px);font-weight:700;
+  line-height:.95;letter-spacing:-.045em;font-variant-numeric:tabular-nums;
+  transition:color .4s var(--mg-ease)}
+.dial-unit{font-size:14px;letter-spacing:.3em;color:var(--mg-ink-3);margin-top:8px;
+  font-family:var(--mg-mono);text-transform:uppercase}
+.dial-zone{margin-top:14px;display:inline-flex;align-items:center;gap:8px;
+  height:32px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:600;
+  background:rgba(18,19,23,.06)}
+.dial-zone i{width:8px;height:8px;border-radius:50%;background:currentColor}
+
+.side-stack{display:grid;gap:14px}
+.trust{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:var(--mg-radius);
+  background:var(--mg-panel);border:1px solid var(--mg-line-2)}
+.trust .led{width:12px;height:12px;border-radius:50%;background:var(--mg-ink-4);flex:0 0 auto}
+.trust.ok .led{background:var(--mg-ok);box-shadow:0 0 12px rgba(46,125,91,.55)}
+.trust.warn .led{background:var(--mg-warn);box-shadow:0 0 12px rgba(192,105,58,.5)}
+.trust.bad .led{background:var(--mg-bad)}
+.trust .t{font-weight:600;font-size:15px}
+.trust .d{color:var(--mg-ink-3);font-size:13px}
+
+.timer-card{padding:20px;border-radius:var(--mg-radius);background:var(--mg-dark);
+  color:#F4F2EC;border:1px solid rgba(255,255,255,.08)}
+.timer-card .k{font-family:var(--mg-mono);font-size:12px;letter-spacing:.18em;
+  color:rgba(244,242,236,.55);text-transform:uppercase}
+.timer-card .v{font-family:var(--mg-mono);font-size:40px;font-weight:700;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-top:6px}
+.train-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ==========================================================================
+   总结
+   ========================================================================== */
+.sum-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:22px;align-items:start}
+@media(max-width:960px){.sum-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--mg-panel);border:1px solid var(--mg-line-2);
+  border-radius:var(--mg-radius);padding:22px}
+.chart-card canvas{width:100%;height:300px;display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--mg-ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+.zone-bar{display:flex;height:18px;border-radius:999px;overflow:hidden;margin:6px 0 16px;
+  border:1px solid var(--mg-line-2);background:var(--mg-bg-2)}
+.zone-bar i{height:100%;transition:width .6s var(--mg-ease)}
+.zone-list{display:grid;gap:9px}
+.zone-row{display:flex;align-items:center;gap:10px;font-size:14px}
+.zone-row .sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto}
+.zone-row .nm{width:96px;color:var(--mg-ink-2)}
+.zone-row .tm{margin-left:auto;font-family:var(--mg-mono);font-variant-numeric:tabular-nums;
+  color:var(--mg-ink)}
+.zone-row .pc{width:52px;text-align:right;color:var(--mg-ink-3);
+  font-family:var(--mg-mono);font-size:13px}
+
+.sum-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.sum-stat{background:var(--mg-panel);border:1px solid var(--mg-line-2);border-radius:var(--mg-radius);
+  padding:18px}
+.sum-stat .k{font-family:var(--mg-mono);font-size:12px;letter-spacing:.12em;
+  color:var(--mg-ink-3);text-transform:uppercase}
+.sum-stat .v{font-family:var(--mg-mono);font-size:30px;font-weight:700;line-height:1.1;
+  margin-top:6px;font-variant-numeric:tabular-nums}
+.sum-stat .s{font-size:13px;color:var(--mg-ink-3);margin-top:4px}
+
+.verdict{background:var(--mg-dark);color:#F4F2EC;border-radius:var(--mg-radius);
+  padding:24px 26px;margin-top:18px;border:1px solid rgba(255,255,255,.08)}
+.verdict .k{font-family:var(--mg-mono);font-size:12px;letter-spacing:.2em;
+  color:var(--mg-gold-2);text-transform:uppercase}
+.verdict h3{font-size:24px;margin:10px 0 8px;font-weight:700}
+.verdict p{color:rgba(244,242,236,.72);font-size:15px;line-height:1.75}
+
+/* ---------- 记录列表 ---------- */
+.rec-list{display:grid;gap:12px}
+.rec{display:flex;align-items:center;gap:18px;padding:18px 20px;background:var(--mg-panel);
+  border:1px solid var(--mg-line-2);border-radius:var(--mg-radius);cursor:pointer;
+  transition:transform .4s var(--mg-ease),box-shadow .4s var(--mg-ease)}
+.rec:hover{transform:translateY(-3px);box-shadow:var(--mg-shadow-s)}
+.rec .when{font-family:var(--mg-mono);font-size:13px;color:var(--mg-ink-3);width:150px;flex:0 0 auto}
+.rec .sum{font-size:15px;color:var(--mg-ink-2)}
+.rec .bpm{margin-left:auto;font-family:var(--mg-mono);font-size:22px;font-weight:700;
+  font-variant-numeric:tabular-nums}
+.rec .bpm small{font-size:12px;color:var(--mg-ink-3);font-weight:500;margin-left:3px}
+.empty{padding:48px;text-align:center;color:var(--mg-ink-3);
+  border:1px dashed rgba(18,19,23,.18);border-radius:var(--mg-radius)}
+
+/* ---------- 设置 ---------- */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+@media(max-width:860px){.set-grid{grid-template-columns:1fr}}
+.field{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;
+  border-bottom:1px solid var(--mg-line-2)}
+.field:last-child{border-bottom:none}
+.field .lb{font-weight:600}
+.field .ds{color:var(--mg-ink-3);font-size:13px}
+.field input[type=number]{width:96px;height:42px;padding:0 12px;border-radius:var(--mg-radius-sm);
+  border:1px solid rgba(18,19,23,.16);background:var(--mg-bg-2);color:var(--mg-ink);
+  font-family:var(--mg-mono);font-size:17px;text-align:right}
+.zone-table{width:100%;border-collapse:collapse;font-size:14px}
+.zone-table th,.zone-table td{padding:11px 8px;text-align:left;border-bottom:1px solid var(--mg-line-2)}
+.zone-table th{font-family:var(--mg-mono);font-size:12px;letter-spacing:.1em;
+  color:var(--mg-ink-3);text-transform:uppercase;font-weight:500}
+.zone-table td.num{font-family:var(--mg-mono);font-variant-numeric:tabular-nums;text-align:right}
+.about-line{display:flex;justify-content:space-between;gap:16px;padding:12px 0;
+  border-bottom:1px solid var(--mg-line-2);font-size:15px}
+.about-line:last-child{border-bottom:none}
+.about-line span:first-child{color:var(--mg-ink-2)}
+
+/* ---------- 提示条 ---------- */
+.mg-toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;
+  background:var(--mg-dark);color:#F4F2EC;padding:13px 22px;border-radius:999px;font-size:15px;
+  box-shadow:var(--mg-shadow-m);pointer-events:none;transition:all .4s var(--mg-ease);z-index:90;
+  max-width:min(90vw,560px);text-align:center}
+.mg-toast.show{opacity:1;transform:translate(-50%,0)}
+.banner{display:none;padding:14px 18px;border-radius:var(--mg-radius);font-size:14px;line-height:1.7;
+  background:#FBF3E4;border:1px solid #E4CE9E;color:#6B4E1B;margin-top:14px}
+.banner.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ 顶栏 -->
+<header class="mg-header">
+  <div class="mg-wrap">
+    <a class="mg-logo" href="#" onclick="go('home');return false;">
+      <span class="mg-logo-mark">MG</span>
+      <span class="mg-logo-text">MASTER<em>GUARD</em></span>
+    </a>
+    <nav class="mg-nav" id="nav">
+      <button data-go="home" class="active">首页</button>
+      <button data-go="train">训练</button>
+      <button data-go="records">记录</button>
+      <button data-go="settings">设置</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============================================================ 首页 -->
+<main>
+<section class="page active" id="page-home">
+  <div class="mg-wrap">
+    <div class="hero">
+      <div>
+        <div class="mg-eyebrow">MASTER YOUR GAME</div>
+        <h1>陪伴你训练的<em>护齿</em></h1>
+        <div class="tagline">护齿内 PPG 连续监测 · 训练即时反馈</div>
+        <p class="lede">
+          连接护齿设备，实时读取经过平滑处理的可信心率；训练结束后，
+          用区间分布与趋势曲线还原这段训练对身体的实际负荷。
+        </p>
+        <div class="hero-actions">
+          <button class="mg-btn mg-btn-gold mg-btn-lg" onclick="go('train')">进入训练 →</button>
+          <button class="mg-btn mg-btn-ghost mg-btn-lg" onclick="go('records')">查看全部训练数据</button>
+        </div>
+      </div>
+
+      <div class="connect-panel">
+        <div class="dev-row">
+          <span class="dev-dot" id="homeDot"></span>
+          <div>
+            <div class="dev-name" id="homeDevName">未连接设备</div>
+            <div class="dev-sub" id="homeDevSub">GUARD-HR · BLE HEART RATE</div>
+          </div>
+        </div>
+        <div class="readout">
+          <span class="num" id="homeBpm">--</span>
+          <span class="unit">BPM</span>
+          <span class="zone" id="homeZone">等待连接</span>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="k">今日训练</div><div class="v" id="homeToday">0 次</div></div>
+          <div class="stat"><div class="k">累计时长</div><div class="v" id="homeTotal">0 分</div></div>
+          <div class="stat"><div class="k">数据点</div><div class="v" id="homeSamples">0</div></div>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="mg-btn mg-btn-dark" id="homeConnect">连接设备</button>
+          <button class="mg-btn mg-btn-ghost mg-btn-sm" id="homeDisconnect" disabled>断开</button>
+        </div>
+        <div class="banner" id="homeBanner"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
+      <div class="mg-eyebrow">RECENT SESSIONS</div>
+      <div style="height:1px;flex:1;background:var(--mg-line)"></div>
+    </div>
+    <div class="rec-list" id="homeRecent"></div>
+  </div>
+</section>
+
+<!-- ============================================================ 训练中 -->
+<section class="page" id="page-train">
+  <div class="mg-wrap">
+    <div class="page-head">
+      <div class="mg-eyebrow">LIVE TRAINING</div>
+      <h2 class="mg-page-title">训练中 · <em>只显示能信的数</em></h2>
+      <p class="mg-lede" style="margin-top:10px">
+        心率经过 3 秒滑动平均，去掉了逐拍抖动；左边的灯告诉你此刻这个数可不可信。
+        训练中不画曲线——抖动会误导你对身体状态的判断。
+      </p>
+    </div>
+
+    <div class="train-stage">
+      <div class="dial">
+        <!-- 区间环 -->
+        <svg viewBox="0 0 400 400" aria-hidden="true">
+          <circle cx="200" cy="200" r="158" fill="none" stroke="rgba(18,19,23,.07)" stroke-width="14"/>
+          <circle id="dialArc" cx="200" cy="200" r="158" fill="none"
+                  stroke="var(--z0)" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="0 993" transform="rotate(-90 200 200)"
+                  style="transition:stroke-dasharray .5s cubic-bezier(.22,1,.36,1),stroke .4s"/>
+        </svg>
+        <div class="dial-core">
+          <div class="dial-bpm" id="liveBpm">--</div>
+          <div class="dial-unit">BPM · 平滑值</div>
+          <div class="dial-zone" id="liveZone"><i></i><span>等待数据</span></div>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="trust" id="trustBox">
+          <span class="led"></span>
+          <div>
+            <div class="t" id="trustTitle">未开始</div>
+            <div class="d" id="trustDesc">连接设备后开始训练</div>
+          </div>
+        </div>
+
+        <div class="timer-card">
+          <div class="k">ELAPSED</div>
+          <div class="v" id="liveTimer">00:00</div>
+        </div>
+
+        <div class="timer-card" style="background:var(--mg-panel);color:var(--mg-ink);
+             border-color:var(--mg-line-2)">
+          <div class="k" style="color:var(--mg-ink-3)">VALID SAMPLES</div>
+          <div class="v" id="liveValid" style="color:var(--mg-ink)">0 / 0</div>
+          <div style="font-size:13px;color:var(--mg-ink-3);margin-top:2px">
+            有效点数 / 总点数
+          </div>
+        </div>
+
+        <div class="train-actions">
+          <button class="mg-btn mg-btn-gold" id="btnStartTrain" style="flex:1">开始训练</button>
+          <button class="mg-btn mg-btn-ghost" id="btnStopTrain" disabled style="flex:1">结束</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 训练总结 -->
+<section class="page" id="page-summary">
+  <div class="mg-wrap">
+    <div class="page-head">
+      <div class="mg-eyebrow">SESSION SUMMARY</div>
+      <h2 class="mg-page-title">训练总结 · <em>这段训练有多累</em></h2>
+      <p class="mg-lede" style="margin-top:10px" id="sumWhen">—</p>
+    </div>
+
+    <div class="sum-grid">
+      <div>
+        <div class="chart-card">
+          <div class="mg-eyebrow" style="margin-bottom:6px">HR TREND</div>
+          <canvas id="chart" width="1200" height="600"></canvas>
+          <div class="legend" id="chartLegend"></div>
+        </div>
+
+        <div class="sum-stats" id="sumStats"></div>
+
+        <div class="verdict">
+          <div class="k">TRAINING INTENSITY</div>
+          <h3 id="verdictTitle">—</h3>
+          <p id="verdictText">—</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="mg-card" style="padding:22px">
+          <div class="mg-eyebrow" style="margin-bottom:10px">ZONE DISTRIBUTION</div>
+          <div class="zone-bar" id="zoneBar"></div>
+          <div class="zone-list" id="zoneList"></div>
+        </div>
+
+        <div class="mg-card" style="padding:22px;margin-top:14px">
+          <div class="mg-eyebrow" style="margin-bottom:10px">METRICS</div>
+          <div id="sumMeta" style="display:grid;gap:10px"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="mg-btn mg-btn-dark" onclick="go('train')">再测一次</button>
+          <button class="mg-btn mg-btn-ghost" onclick="go('records')">查看全部训练数据</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 记录 -->
+<section class="page" id="page-records">
+  <div class="mg-wrap">
+    <div class="page-head">
+      <div class="mg-eyebrow">SESSION HISTORY</div>
+      <h2 class="mg-page-title">训练记录 · <em>本地保存</em></h2>
+      <p class="mg-lede" style="margin-top:10px">
+        所有记录只存在这台设备上（无云端、不上传）。点击任意一条查看当次总结。
+      </p>
+    </div>
+    <div class="rec-list" id="recList"></div>
+    <div style="margin-top:22px">
+      <button class="mg-btn mg-btn-ghost mg-btn-sm" id="btnClearAll">清空全部记录</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 设置 -->
+<section class="page" id="page-settings">
+  <div class="mg-wrap">
+    <div class="page-head">
+      <div class="mg-eyebrow">SETTINGS &amp; ABOUT</div>
+      <h2 class="mg-page-title">设置 · <em>按你的身体参数分区</em></h2>
+    </div>
+
+    <div class="set-grid">
+      <div class="mg-card">
+        <div class="mg-eyebrow" style="margin-bottom:6px">PERSONAL</div>
+        <div class="field">
+          <div>
+            <div class="lb">年龄</div>
+            <div class="ds">用于估算最大心率：208 − 0.7 × 年龄</div>
+          </div>
+          <input type="number" id="inpAge" min="10" max="90" value="20">
+        </div>
+        <div class="field">
+          <div>
+            <div class="lb">估算最大心率</div>
+            <div class="ds">仅用于区间划分，不是医学结论</div>
+          </div>
+          <div style="font-family:var(--mg-mono);font-size:20px;font-weight:700" id="outHrmax">194</div>
+        </div>
+        <div class="field">
+          <div>
+            <div class="lb">数据保存</div>
+            <div class="ds">本机 localStorage，最多保留 20 条</div>
+          </div>
+          <div style="font-family:var(--mg-mono);font-size:14px;color:var(--mg-ink-3)" id="outStore">— 条</div>
+        </div>
+      </div>
+
+      <div class="mg-card">
+        <div class="mg-eyebrow" style="margin-bottom:10px">HEART RATE ZONES</div>
+        <table class="zone-table" id="zoneTable">
+          <thead><tr><th>区间</th><th>心率范围</th><th style="text-align:right">占比</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mg-card" style="margin-top:22px">
+      <div class="mg-eyebrow" style="margin-bottom:10px">ABOUT</div>
+      <div class="about-line"><span>品牌</span><span>MasterGuard 护齿大师</span></div>
+      <div class="about-line"><span>产品</span><span>训练心率监测（口内 PPG）</span></div>
+      <div class="about-line"><span>设备</span><span>Guard-HR · BLE Heart Rate Service 0x180D</span></div>
+      <div class="about-line"><span>版本</span><span>v1.0 · 2026-10</span></div>
+      <div class="about-line"><span>说明</span><span>健康与运动监测用途，不作医疗诊断</span></div>
+      <div class="about-line"><span>数据</span><span>全部保存在本机，不上传、不同步</span></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="mg-toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   0. 工具
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+const pad2 = n => String(n).padStart(2, '0');
+const fmtDate = ms => {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+const fmtDur = sec => {
+  sec = Math.round(sec);
+  if (sec < 60) return sec + ' 秒';
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return s ? `${m} 分 ${pad2(s)} 秒` : `${m} 分`;
+};
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+let toastTimer = null;
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ==========================================================================
+   1. 心率区间（Tanaka: HRmax = 208 - 0.7*age）
+   ========================================================================== */
+const ZONES = [
+  { id: 0, key: 'rest', name: '静息',   from: 0,    to: .50, color: 'var(--z0)' },
+  { id: 1, key: 'z1',   name: '热身',   from: .50,  to: .60, color: 'var(--z1)' },
+  { id: 2, key: 'z2',   name: '燃脂',   from: .60,  to: .70, color: 'var(--z2)' },
+  { id: 3, key: 'z3',   name: '有氧',   from: .70,  to: .80, color: 'var(--z3)' },
+  { id: 4, key: 'z4',   name: '无氧',   from: .80,  to: .90, color: 'var(--z4)' },
+  { id: 5, key: 'z5',   name: '极限',   from: .90,  to: 9.99, color: 'var(--z5)' }
+];
+function hrmax(age) { return Math.round(208 - 0.7 * clamp(age, 10, 90)); }
+function zoneOf(bpm, age) {
+  if (!bpm || bpm <= 0) return null;
+  const r = bpm / hrmax(age);
+  return ZONES.find(z => r >= z.from && r < z.to) || ZONES[0];
+}
+
+/* ==========================================================================
+   2. 连接层（适配器）—— 换成原生 BLE 时只改这一块
+   ========================================================================== */
+const Link = (() => {
+  let dev = null, server = null, ch = null;
+  let onBpm = null, onState = null;
+
+  return {
+    onData(fn) { onBpm = fn; },
+    onStatus(fn) { onState = fn; },
+    get connected() { return !!(dev && dev.gatt && dev.gatt.connected); },
+    getName() { return dev ? (dev.name || 'Guard-HR') : ''; },
+
+    async connect() {
+      if (!('bluetooth' in navigator)) throw new Error('浏览器不支持蓝牙（需 Edge/Chrome）');
+      dev = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['heart_rate'] }],
+        optionalServices: ['battery_service']
+      });
+      dev.addEventListener('gattserverdisconnected', () => {
+        onState && onState('disconnected');
+      });
+      server = await dev.gatt.connect();
+      const svc = await server.getPrimaryService('heart_rate');
+      ch = await svc.getCharacteristic('heart_rate_measurement');
+      await ch.startNotifications();
+      ch.addEventListener('characteristicvaluechanged', e => {
+        const v = e.target.value;
+        const flags = v.getUint8(0);
+        const bpm = (flags & 0x01) ? v.getUint16(1, true) : v.getUint8(1);
+        onBpm && onBpm(bpm);
+      });
+      onState && onState('connected');
+      return this.getName();
+    },
+
+    disconnect() {
+      try { if (dev && dev.gatt && dev.gatt.connected) dev.gatt.disconnect(); } catch (e) {}
+      dev = server = ch = null;
+    }
+  };
+})();
+
+/* ==========================================================================
+   3. 状态
+   ========================================================================== */
+const STORE_KEY = 'mg_sessions_v1';
+const AGE_KEY = 'mg_age_v1';
+const SMOOTH_MS = 3000;      // 3 秒滑动平均
+const SAMPLE_MS = 1000;      // 每秒记一个样本
+
+const state = {
+  age: 20,
+  connected: false,
+  // 平滑缓冲
+  raw: [],                   // {t, bpm}
+  // 当前训练
+  running: false,
+  startedAt: 0,
+  samples: [],               // {t(sec), bpm}
+  totalPackets: 0,
+  validPackets: 0,
+  lastSampleAt: 0,
+  // 展示
+  liveBpm: 0,
+  trust: 'idle'
+};
+
+/* ==========================================================================
+   4. 平滑与可信度
+   ========================================================================== */
+function pushRaw(bpm, nowMs) {
+  state.totalPackets++;
+  if (bpm >= 30 && bpm <= 240) {
+    state.raw.push({ t: nowMs, bpm });
+    state.validPackets++;
+  }
+  while (state.raw.length && nowMs - state.raw[0].t > SMOOTH_MS) state.raw.shift();
+  if (!state.raw.length) return 0;
+  const sum = state.raw.reduce((a, b) => a + b.bpm, 0);
+  return sum / state.raw.length;
+}
+
+function trustLevel() {
+  if (!state.running) return 'idle';
+  const recent = state.raw.length;
+  if (recent >= 2) return 'ok';
+  if (recent === 1) return 'warn';
+  return 'bad';
+}
+
+/* ==========================================================================
+   5. 会话存储
+   ========================================================================== */
+function loadSessions() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { return []; }
+}
+function saveSessions(list) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(list.slice(0, 20))); } catch (e) {}
+}
+function loadAge() {
+  const v = parseInt(localStorage.getItem(AGE_KEY) || '20', 10);
+  return clamp(isNaN(v) ? 20 : v, 10, 90);
+}
+
+/* ==========================================================================
+   6. 统计
+   ========================================================================== */
+function computeStats(samples, age) {
+  const valid = samples.filter(s => s.bpm > 0);
+  if (!valid.length) {
+    return { avg: 0, min: 0, max: 0, validRatio: 0, dur: 0, zones: zerosZones(), validCount: 0 };
+  }
+  const bpms = valid.map(s => s.bpm);
+  const avg = bpms.reduce((a, b) => a + b, 0) / bpms.length;
+  const min = Math.min(...bpms), max = Math.max(...bpms);
+
+  // 区间时长：按相邻样本间隔累加
+  const zones = zerosZones();
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i];
+    if (!(s.bpm > 0)) continue;
+    const dt = (i + 1 < samples.length ? samples[i + 1].t - s.t : 1) || 1;
+    const z = zoneOf(s.bpm, age);
+    if (z) zones[z.key] += dt;
+  }
+  return {
+    avg, min, max,
+    validRatio: valid.length / samples.length,
+    dur: samples.length ? samples[samples.length - 1].t : 0,
+    zones,
+    validCount: valid.length
+  };
+}
+function zerosZones() {
+  const o = {};
+  ZONES.forEach(z => o[z.key] = 0);
+  return o;
+}
+
+/* ==========================================================================
+   7. 页面切换
+   ========================================================================== */
+function go(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = $('page-' + name);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('#nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.go === name);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'records') renderRecords();
+  if (name === 'settings') renderSettings();
+  if (name === 'home') { refreshHomeStats(); renderRecentOnHome(); }
+}
+document.querySelectorAll('#nav button').forEach(b => {
+  b.onclick = () => go(b.dataset.go);
+});
+
+/* ==========================================================================
+   8. 连接 UI
+   ========================================================================== */
+async function doConnect() {
+  try {
+    const name = await Link.connect();
+    state.connected = true;
+    setConnUI(true, name);
+    toast('已连接：' + name);
+  } catch (e) {
+    const msg = String(e.message || e);
+    $('homeBanner').textContent = '连接失败：' + msg +
+      '（若是用户取消可忽略；提示超时请靠近设备重试；确认开发板还有电）';
+    $('homeBanner').classList.add('show');
+    toast('连接失败');
+  }
+}
+function setConnUI(ok, name) {
+  state.connected = ok;
+  $('homeDot').classList.toggle('on', ok);
+  $('homeDevName').textContent = ok ? (name || 'Guard-HR') : '未连接设备';
+  $('homeDevSub').textContent = ok ? 'CONNECTED · BLE HEART RATE' : 'GUARD-HR · BLE HEART RATE';
+  $('homeConnect').disabled = ok;
+  $('homeDisconnect').disabled = !ok;
+  $('btnStartTrain').disabled = !ok;
+  if (ok) $('homeBanner').classList.remove('show');
+}
+$('homeConnect').onclick = doConnect;
+$('homeDisconnect').onclick = () => {
+  Link.disconnect();
+  setConnUI(false);
+  if (state.running) stopTraining(true);
+  toast('已断开');
+};
+
+Link.onStatus(st => {
+  if (st === 'disconnected') {
+    setConnUI(false);
+    if (state.running) {
+      stopTraining(true);
+      toast('蓝牙断开，训练已自动结束并保存');
+    } else {
+      toast('蓝牙已断开');
+    }
+  }
+});
+
+Link.onData(rawBpm => {
+  const now = performance.now();
+  const smooth = pushRaw(rawBpm, now);
+
+  // 首页小读数（即使不在训练也显示实时值）
+  const z = zoneOf(rawBpm, state.age);
+  $('homeBpm').textContent = smooth > 0 ? Math.round(smooth) : '--';
+  $('homeZone').textContent = z ? z.name + '区' : '等待数据';
+
+  if (smooth > 0) {
+    state.liveBpm = smooth;
+    updateTrainUI();
+  }
+
+  // 采样统一放在下面的定时器里：即使设备暂时不发声，也要每秒记一个点，
+  // 这样「数据覆盖率」才有意义（否则分母全是有效点，覆盖率永远 100%）。
+});
+
+/* ==========================================================================
+   9. 训练流程
+   ========================================================================== */
+$('btnStartTrain').onclick = () => {
+  if (!state.connected) { toast('请先连接设备'); return; }
+  startTraining();
+};
+$('btnStopTrain').onclick = () => stopTraining(false);
+
+function startTraining() {
+  resetTrainVisuals();
+  state.running = true;
+  state.startedAt = Date.now();
+  state.samples = [];
+  state.raw = [];
+  state.totalPackets = 0;
+  state.validPackets = 0;
+  state.lastSampleAt = 0;
+  state.liveBpm = 0;
+
+  $('btnStartTrain').disabled = true;
+  $('btnStopTrain').disabled = false;
+  $('liveValid').textContent = '0 / 0';
+  updateTrainUI();
+  go('train');
+  toast('训练开始，保持咬合稳定');
+}
+
+function stopTraining(auto) {
+  if (!state.running) return;
+  state.running = false;
+  $('btnStartTrain').disabled = false;
+  $('btnStopTrain').disabled = true;
+
+  const dur = (Date.now() - state.startedAt) / 1000;
+  const stats = computeStats(state.samples, state.age);
+
+  // 太短或没有数据的，丢弃并提示
+  if (state.samples.length < 5 || stats.validCount === 0) {
+    toast('这次数据太少（不到 5 秒有效数据），没有保存');
+    $('trustTitle').textContent = '数据不足';
+    $('trustDesc').textContent = '请重新开始，并保持设备贴合';
+    setTrust('bad');
+    return;
+  }
+
+  const session = {
+    id: 'S' + Date.now(),
+    startedAt: state.startedAt,
+    endedAt: Date.now(),
+    age: state.age,
+    samples: state.samples.slice(),
+    stats: {
+      avg: +stats.avg.toFixed(1),
+      min: stats.min,
+      max: stats.max,
+      dur: +dur.toFixed(1),
+      validRatio: +stats.validRatio.toFixed(3),
+      zones: stats.zones
+    }
+  };
+
+  const list = loadSessions();
+  list.unshift(session);
+  saveSessions(list);
+  refreshHomeStats();
+  renderRecentOnHome();
+
+  // 退场动画：心率数字滚到 0 并淡出、区间环收束，动画结束再跳总结页
+  playExit(() => {
+    renderSummary(session);
+    go('summary');
+    toast(auto ? '训练已结束（连接中断），结果已保存' : '训练完成，已保存');
+  });
+}
+
+/* ---------- 退场动画 ----------
+   质感来自三件事：① easeOutCubic 收尾；② 数字滚向 0 而不是直接消失；
+   ③ 环同步收束。不闪烁的前提：动画期间只改 textContent / transform / opacity，
+   不触发重排（数字用等宽 + tabular-nums，宽度恒定）。 */
+function playExit(done) {
+  const core = document.querySelector('.dial-core');
+  const arc = $('dialArc');
+  const zone = $('liveZone');
+  const bpmEl = $('liveBpm');
+
+  const startBpm = state.liveBpm || 0;
+  const D = 900;
+  const t0 = performance.now();
+
+  core.style.willChange = 'opacity, transform';
+  arc.style.transition = 'stroke-dasharray ' + D + 'ms cubic-bezier(.4,0,.2,1), opacity ' + D + 'ms ease';
+  arc.setAttribute('stroke-dasharray', '0 993');       // 区间环收束到 0
+  zone.style.transition = 'opacity .35s ease';
+  zone.style.opacity = '0';                            // 区间标签先淡出
+
+  const tick = now => {
+    const k = Math.min(1, (now - t0) / D);
+    const e = 1 - Math.pow(1 - k, 3);                  // easeOutCubic
+    bpmEl.textContent = String(Math.round(startBpm * (1 - e)));
+    bpmEl.style.opacity = String(1 - e * 0.85);
+    core.style.transform = 'scale(' + (1 - 0.045 * e) + ')';
+    if (k < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      core.style.willChange = '';
+      bpmEl.textContent = '--';
+      done && done();
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
+/* 回到训练页时复位动画状态（避免上一次的淡出残留） */
+function resetTrainVisuals() {
+  const core = document.querySelector('.dial-core');
+  const arc = $('dialArc');
+  const zone = $('liveZone');
+  const bpmEl = $('liveBpm');
+
+  core.style.transition = 'none';
+  core.style.opacity = '1';
+  core.style.transform = 'none';
+  bpmEl.style.opacity = '1';
+  bpmEl.textContent = '--';
+  bpmEl.style.color = 'var(--mg-ink-4)';
+  arc.style.transition = 'none';
+  arc.style.opacity = '1';
+  arc.setAttribute('stroke-dasharray', '0 993');
+  zone.style.transition = 'none';
+  zone.style.opacity = '1';
+  zone.style.color = '';
+  zone.innerHTML = '<i></i><span>等待数据</span>';
+  void core.offsetWidth;                               // 强制回流，让复位立即生效
+  core.style.transition = '';
+  arc.style.transition = '';
+  zone.style.transition = '';
+}
+
+function setTrust(level) {
+  const box = $('trustBox');
+  box.classList.remove('ok', 'warn', 'bad');
+  if (level === 'ok') box.classList.add('ok');
+  if (level === 'warn') box.classList.add('warn');
+  if (level === 'bad') box.classList.add('bad');
+}
+
+function updateTrainUI() {
+  const bpm = state.liveBpm;
+  const z = zoneOf(bpm, state.age);
+
+  $('liveBpm').textContent = bpm > 0 ? Math.round(bpm) : '--';
+  $('liveBpm').style.color = z ? z.color : 'var(--mg-ink-4)';
+
+  // 区间环：按心率占比 0~100% 映射到 0~993 周长
+  const ratio = bpm > 0 ? clamp(bpm / hrmax(state.age), 0, 1) : 0;
+  const arc = $('dialArc');
+  arc.setAttribute('stroke-dasharray', `${(ratio * 993).toFixed(1)} 993`);
+  arc.setAttribute('stroke', z ? z.color : 'var(--z0)');
+
+  if (z) {
+    $('liveZone').innerHTML = `<i></i><span>${z.name}区 · ${Math.round(bpm)} BPM</span>`;
+    $('liveZone').style.color = z.color;
+  }
+
+  // 计时
+  if (state.running) {
+    const sec = Math.floor((Date.now() - state.startedAt) / 1000);
+    $('liveTimer').textContent = pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60);
+  }
+
+  // 可信度
+  const lv = trustLevel();
+  if (lv !== state.trust) {
+    state.trust = lv;
+    setTrust(lv === 'idle' ? '' : lv);
+    if (lv === 'ok') {
+      $('trustTitle').textContent = '数据可信';
+      $('trustDesc').textContent = '最近 3 秒有稳定读数';
+    } else if (lv === 'warn') {
+      $('trustTitle').textContent = '正在稳定';
+      $('trustDesc').textContent = '刚收到 1 个读数，稍等 2 秒';
+    } else if (lv === 'bad') {
+      $('trustTitle').textContent = '暂无有效读数';
+      $('trustDesc').textContent = '检查咬合是否贴合、设备是否还在广播';
+    }
+  }
+}
+
+// 每 500ms：清理过期平滑样本 + 采样 + 刷新计时/可信度
+setInterval(() => {
+  const nowP = performance.now();
+  while (state.raw.length && nowP - state.raw[0].t > SMOOTH_MS) state.raw.shift();
+
+  if (!state.running) return;
+
+  const sec = Math.floor((Date.now() - state.startedAt) / 1000);
+  $('liveTimer').textContent = pad2(Math.floor(sec / 60)) + ':' + pad2(sec % 60);
+
+  // 每秒记一个样本；无数据时记 0（让「数据覆盖率」有意义）
+  const tSec = (Date.now() - state.startedAt) / 1000;
+  if (tSec - state.lastSampleAt >= SAMPLE_MS / 1000) {
+    state.lastSampleAt = tSec;
+    const has = state.raw.length > 0;
+    state.samples.push({ t: Math.round(tSec), bpm: has ? Math.round(state.liveBpm * 10) / 10 : 0 });
+    const valid = state.samples.filter(x => x.bpm > 0).length;
+    $('liveValid').textContent = valid + ' / ' + state.samples.length;
+  }
+  updateTrainUI();
+}, 500);
+
+/* ==========================================================================
+   10. 总结渲染
+   ========================================================================== */
+function renderSummary(s) {
+  const age = s.age || state.age;
+  const st = s.stats;
+  $('sumWhen').textContent = `${fmtDate(s.startedAt)} · 时长 ${fmtDur(st.dur)} · ${s.samples.length} 个采样点`;
+
+  drawChart(s);
+  renderZones(st.zones, age);
+  renderSumStats(st);
+
+  // 强度结论
+  const total = Object.values(st.zones).reduce((a, b) => a + b, 0) || 1;
+  const hi = (st.zones.z4 + st.zones.z5) / total;
+  const mid = (st.zones.z2 + st.zones.z3) / total;
+  const low = (st.zones.rest + st.zones.z1) / total;
+
+  let title = '—', text = '—';
+  if (st.validRatio < 0.5) {
+    title = '数据覆盖不足，结论仅供参考';
+    text = `有效数据只占 ${(st.validRatio * 100).toFixed(0)}%。建议下次训练时保持护齿贴合、避免频繁张口说话，以获得更完整的曲线。`;
+  } else if (hi >= 0.4) {
+    title = '高强度 · 接近无氧为主';
+    text = `无氧与极限区间合计 ${(hi * 100).toFixed(0)}%，平均心率 ${st.avg.toFixed(0)} BPM（约 ${((st.avg / hrmax(age)) * 100).toFixed(0)}% 最大心率）。这类训练对心肺刺激强，建议 24 小时内安排低强度恢复，并留意疲劳与睡眠。`;
+  } else if (mid >= 0.5) {
+    title = '中等强度 · 有氧为主';
+    text = `燃脂与有氧区间合计 ${(mid * 100).toFixed(0)}%，平均心率 ${st.avg.toFixed(0)} BPM。这是提升心肺耐力最划算的强度带，训练量适中，恢复压力不大。`;
+  } else if (low >= 0.6) {
+    title = '低强度 · 以热身与放松为主';
+    text = `静息与热身区间合计 ${(low * 100).toFixed(0)}%，平均心率 ${st.avg.toFixed(0)} BPM。这段更像热身或恢复训练；若目标是提升心肺，可适当提高强度或延长持续时间。`;
+  } else {
+    title = '强度分布较均衡';
+    text = `平均心率 ${st.avg.toFixed(0)} BPM，峰值 ${st.max} BPM。各区间分布比较分散，说明这段训练可能有明显的强度起伏，适合作为综合训练。`;
+  }
+  $('verdictTitle').textContent = title;
+  $('verdictText').textContent = text;
+
+  // 元信息
+  $('sumMeta').innerHTML = [
+    ['最大心率估算', hrmax(age) + ' BPM'],
+    ['平均心率', st.avg.toFixed(1) + ' BPM'],
+    ['峰值', st.max + ' BPM'],
+    ['最低', st.min + ' BPM'],
+    ['数据覆盖率', (st.validRatio * 100).toFixed(0) + ' %'],
+    ['年龄设置', age + ' 岁']
+  ].map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px;
+      border-bottom:1px solid var(--mg-line-2);padding-bottom:8px">
+      <span style="color:var(--mg-ink-2)">${k}</span>
+      <span style="font-family:var(--mg-mono);font-variant-numeric:tabular-nums">${v}</span>
+    </div>`).join('');
+}
+
+function renderZones(zones, age) {
+  const total = Object.values(zones).reduce((a, b) => a + b, 0) || 1;
+  $('zoneBar').innerHTML = ZONES.map(z => {
+    const w = zones[z.key] / total * 100;
+    return w > 0.5 ? `<i style="width:${w.toFixed(2)}%;background:${z.color}"></i>` : '';
+  }).join('');
+
+  $('zoneList').innerHTML = ZONES.map(z => {
+    const sec = zones[z.key] || 0;
+    const pct = (sec / total * 100);
+    const rm = Math.round(hrmax(age) * z.from);
+    const rm2 = z.id === 5 ? '' : '–' + Math.round(hrmax(age) * z.to);
+    return `<div class="zone-row">
+      <span class="sw" style="background:${z.color}"></span>
+      <span class="nm">${z.name}</span>
+      <span style="color:var(--mg-ink-3);font-size:12px;font-family:var(--mg-mono)">${rm}${rm2}</span>
+      <span class="tm">${fmtDur(sec)}</span>
+      <span class="pc">${pct.toFixed(0)}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderSumStats(st) {
+  const items = [
+    ['平均心率', st.avg.toFixed(1), 'BPM'],
+    ['峰值心率', st.max, 'BPM'],
+    ['有效覆盖', (st.validRatio * 100).toFixed(0), '%'],
+    ['训练时长', fmtDur(st.dur), '']
+  ];
+  $('sumStats').innerHTML = items.map(([k, v, u]) => `
+    <div class="sum-stat">
+      <div class="k">${k}</div>
+      <div class="v">${v}<span style="font-size:14px;color:var(--mg-ink-3);margin-left:4px">${u}</span></div>
+    </div>`).join('');
+}
+
+/* ---------- 曲线（Canvas，区间背景带 + 贝塞尔平滑）---------- */
+function drawChart(s) {
+  const cv = $('chart');
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cssW = cv.clientWidth || 900, cssH = 300;
+  cv.width = cssW * dpr; cv.height = cssH * dpr;
+  cv.style.height = cssH + 'px';
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, cssW, cssH);
+
+  const padL = 46, padR = 16, padT = 18, padB = 30;
+  const W = cssW - padL - padR, H = cssH - padT - padB;
+  const age = s.age || state.age;
+  const samples = s.samples || [];
+  if (samples.length < 2) return;
+
+  const maxBpm = Math.max(...samples.map(x => x.bpm), 100);
+  const top = Math.min(hrmax(age) * 1.02, maxBpm * 1.08);
+  const dur = Math.max(1, samples[samples.length - 1].t);
+
+  const X = t => padL + (t / dur) * W;
+  const Y = b => padT + H - (b / top) * H;
+
+  // 区间背景带
+  ZONES.forEach(z => {
+    const y1 = Y(Math.min(top, hrmax(age) * z.to));
+    const y2 = Y(Math.min(top, hrmax(age) * z.from));
+    g.fillStyle = z.color;
+    g.globalAlpha = 0.07;
+    g.fillRect(padL, Math.min(y1, y2), W, Math.abs(y2 - y1));
+    g.globalAlpha = 1;
+  });
+
+  // 网格与刻度
+  g.strokeStyle = 'rgba(18,19,23,.08)';
+  g.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const v = top * i / 4;
+    const y = Y(v);
+    g.beginPath(); g.moveTo(padL, y); g.lineTo(padL + W, y); g.stroke();
+    g.fillStyle = 'rgba(78,82,90,.75)';
+    g.font = '11px ' + getComputedStyle(document.body).fontFamily;
+    g.textAlign = 'right';
+    g.fillText(Math.round(v), padL - 8, y + 4);
+  }
+  // 时间刻度
+  g.textAlign = 'center';
+  for (let i = 0; i <= 4; i++) {
+    const t = dur * i / 4;
+    const x = X(t);
+    g.fillStyle = 'rgba(78,82,90,.75)';
+    g.fillText(fmtDur(t), x, cssH - 10);
+  }
+
+  if (samples.length < 2) return;
+
+  // 曲线（Catmull-Rom → 贝塞尔）
+  g.beginPath();
+  g.lineWidth = 2.4;
+  g.strokeStyle = '#121317';
+  g.lineJoin = 'round';
+  g.lineCap = 'round';
+  const pts = samples.map(p => ({ x: X(p.t), y: Y(p.bpm) }));
+  g.moveTo(pts[0].x, pts[0].y);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6, c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6, c2y = p2.y - (p3.y - p1.y) / 6;
+    g.bezierCurveTo(c1x, c1y, c2x, c2y, p2.x, p2.y);
+  }
+  g.stroke();
+
+  // 曲线下方淡金填充
+  g.lineTo(pts[pts.length - 1].x, padT + H);
+  g.lineTo(pts[0].x, padT + H);
+  g.closePath();
+  const grad = g.createLinearGradient(0, padT, 0, padT + H);
+  grad.addColorStop(0, 'rgba(176,141,79,.18)');
+  grad.addColorStop(1, 'rgba(176,141,79,0)');
+  g.fillStyle = grad;
+  g.fill();
+
+  // 图例
+  $('chartLegend').innerHTML = ZONES.filter(z => z.id > 0)
+    .map(z => `<span><i style="background:${z.color}"></i>${z.name} ${Math.round(hrmax(age)*z.from)}+</span>`)
+    .join('');
+}
+
+/* ==========================================================================
+   11. 记录列表 / 首页统计
+   ========================================================================== */
+function renderRecords() {
+  const list = loadSessions();
+  const box = $('recList');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">还没有训练记录。去「训练」页开始第一次吧。</div>';
+    return;
+  }
+  box.innerHTML = list.map(s => `
+    <div class="rec" data-id="${s.id}">
+      <div class="when">${fmtDate(s.startedAt)}</div>
+      <div class="sum">${fmtDur(s.stats.dur)} · 有效覆盖 ${(s.stats.validRatio*100).toFixed(0)}%</div>
+      <div class="bpm">${s.stats.avg.toFixed(0)}<small>BPM</small></div>
+    </div>`).join('');
+  box.querySelectorAll('.rec').forEach(el => {
+    el.onclick = () => {
+      const s = loadSessions().find(x => x.id === el.dataset.id);
+      if (s) { renderSummary(s); go('summary'); }
+    };
+  });
+}
+
+function renderRecentOnHome() {
+  const list = loadSessions().slice(0, 3);
+  const box = $('homeRecent');
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">还没有记录——第一次训练结束后，这里会出现摘要。</div>';
+    return;
+  }
+  box.innerHTML = list.map(s => `
+    <div class="rec" data-id="${s.id}">
+      <div class="when">${fmtDate(s.startedAt)}</div>
+      <div class="sum">${fmtDur(s.stats.dur)} · 平均 ${s.stats.avg.toFixed(0)} BPM</div>
+      <div class="bpm">${s.stats.avg.toFixed(0)}<small>BPM</small></div>
+    </div>`).join('');
+  box.querySelectorAll('.rec').forEach(el => {
+    el.onclick = () => {
+      const s = loadSessions().find(x => x.id === el.dataset.id);
+      if (s) { renderSummary(s); go('summary'); }
+    };
+  });
+}
+
+function refreshHomeStats() {
+  const list = loadSessions();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const todayList = list.filter(s => s.startedAt >= today.getTime());
+  const totalSec = list.reduce((a, s) => a + s.stats.dur, 0);
+  const samples = list.reduce((a, s) => a + s.samples.length, 0);
+  $('homeToday').textContent = todayList.length + ' 次';
+  $('homeTotal').textContent = totalSec >= 60 ? Math.round(totalSec / 60) + ' 分' : Math.round(totalSec) + ' 秒';
+  $('homeSamples').textContent = samples;
+}
+
+/* ==========================================================================
+   12. 设置
+   ========================================================================== */
+function renderSettings() {
+  const age = state.age;
+  const max = hrmax(age);
+  $('inpAge').value = age;
+  $('outHrmax').textContent = max;
+  const list = loadSessions();
+  $('outStore').textContent = list.length + ' 条';
+
+  const tb = $('zoneTable').querySelector('tbody');
+  tb.innerHTML = ZONES.map(z => {
+    const lo = Math.round(max * z.from);
+    const hi = z.id === 5 ? '—' : Math.round(max * z.to);
+    return `<tr>
+      <td><span style="display:inline-flex;align-items:center;gap:8px">
+        <i style="width:10px;height:10px;border-radius:3px;background:${z.color};display:inline-block"></i>
+        ${z.name}</span></td>
+      <td class="num">${lo}${hi === '—' ? '+' : '–' + hi}</td>
+      <td class="num" style="color:var(--mg-ink-3)">${z.id === 0 ? '<50%' : '≥' + Math.round(z.from*100) + '%'}</td>
+    </tr>`;
+  }).join('');
+}
+$('inpAge').onchange = () => {
+  const v = clamp(parseInt($('inpAge').value, 10) || 20, 10, 90);
+  state.age = v;
+  localStorage.setItem(AGE_KEY, String(v));
+  renderSettings();
+  if (state.liveBpm) updateTrainUI();
+};
+$('btnClearAll').onclick = () => {
+  if (!confirm('确定清空全部训练记录？此操作不可撤销。')) return;
+  localStorage.removeItem(STORE_KEY);
+  renderRecords(); refreshHomeStats(); renderRecentOnHome();
+  toast('记录已清空');
+};
+
+/* ==========================================================================
+   13. 启动
+   ========================================================================== */
+(function boot() {
+  state.age = loadAge();
+  refreshHomeStats();
+  renderRecentOnHome();
+  renderSettings();
+  updateTrainUI();
+
+  if (!('bluetooth' in navigator)) {
+    $('homeBanner').textContent = '当前浏览器不支持 Web Bluetooth。请用 Microsoft Edge 或 Chrome 打开；' +
+      '手机上 iOS 暂不支持（原生 App 版本正在规划中）。';
+    $('homeBanner').classList.add('show');
+    $('homeConnect').disabled = true;
+    $('btnStartTrain').disabled = true;
+  }
+  // PWA：注册 Service Worker（只在 https 或 localhost 生效；本地 file:// 会被浏览器忽略）
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  window.addEventListener('resize', () => {
+    const active = document.querySelector('.page.active');
+    if (active && active.id === 'page-summary') {
+      const list = loadSessions();
+      if (list.length) drawChart(list[0]);
+    }
+  });
+})();
+</script>
+</body>
+</html>

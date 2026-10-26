@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="MasterGuard">
+  <rect width="512" height="512" rx="118" fill="#0E0F12"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#C8A868" stroke-width="20"/>
+  <polyline points="102,256 164,256 200,229 230,256 261,256 287,189 312,296 338,256 410,256"
+            fill="none" stroke="#C8A868" stroke-width="20"
+            stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
